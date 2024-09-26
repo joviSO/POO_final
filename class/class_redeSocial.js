@@ -105,7 +105,6 @@ class RedeSocial {
         if (this._publicacoes.length === 0) {
             throw new class_AplicationError_1.AppError("\nNenhuma publicação encontrada");
         }
-        // Ordena as publicações pela data de criação em ordem decrescente
         const publicacoesOrdenadas = [...this._publicacoes].sort((a, b) => b.dataHora.getTime() - a.dataHora.getTime());
         return publicacoesOrdenadas;
     }

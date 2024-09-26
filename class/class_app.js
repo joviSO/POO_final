@@ -321,7 +321,6 @@ class App {
             }
             catch (e) {
                 if (e instanceof zod_1.z.ZodError) {
-                    //console.log(e.errors[0].message);
                     console.log(e.errors.map(err => err.message));
                 }
                 else if (e instanceof class_AplicationError_1.AplicationError) {
@@ -347,7 +346,6 @@ class App {
             }
             catch (e) {
                 if (e instanceof zod_1.z.ZodError) {
-                    //console.log(e.errors[0].message);
                     console.log(e.errors.map(err => err.message));
                 }
                 else if (e instanceof class_AplicationError_1.AplicationError) {
