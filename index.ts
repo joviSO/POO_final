@@ -55,7 +55,7 @@ function main () {
                     app.telaEditarPublicacao();
                     break;   
                 case "8":
-                    app.telaComentar();
+                    // app.telaComentar();
                     break;
                 case "9":
                     app.telaListarInteracoes();

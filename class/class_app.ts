@@ -330,50 +330,6 @@ class App {
         } while (repetir.toLowerCase() === 's');
     }
 
-
-    telaComentar(): void {
-        let repetir: string = "";
-
-        do {
-            try {
-                limparTela();
-                this.exibirCabecalho("COMENTAR POSTAGEM");
-
-                console.log("Qual a publicação que deseja comentar?");
-                const idPublicacao: number = Number(this._input("Publicação [Id]: "));
-                idSchema.parse(idPublicacao);
-                const publicacao: Publicacao = this._redesocial.encontrarPublicacaoPorId(idPublicacao);
-
-                console.log();
-                console.log("Quem vai comentar?");
-                console.log();
-                const apelido: string = this._input("Usuário [apelido]: ").toLowerCase();
-                const usuario: Usuario = this._redesocial.encontrarUsuarioPorApelido(apelido);
-
-                console.log();
-                console.log("Comentário:\n");
-                const texto = this._input("> ");
-                conteudoSchema.parse(texto);
-
-                console.log("\nComentário registrado com sucesso!");
-
-            } catch (e) {
-                if (e instanceof z.ZodError) {
-                    console.log(e.errors.map(err => err.message));
-                } else if (e instanceof AppError) {
-                    console.log(e.message);
-                } else {
-                    console.log("\nErro Desconhecido. Contate o Administrador:\n", e);
-                }
-            }
-
-            console.log();
-            repetir = this._input("Comentar novamente? [s/n]: ");
-
-        } while (repetir.toLowerCase() === 's');
-    }
-
-
     telaListarPublicacoesPorUsuario(): void{
         let repetir: string = "";
     

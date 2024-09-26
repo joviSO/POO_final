@@ -262,42 +262,6 @@ class App {
             repetir = this._input("Interagir novamente? [s/n]: ");
         } while (repetir.toLowerCase() === 's');
     }
-    telaComentar() {
-        let repetir = "";
-        do {
-            try {
-                (0, utils_1.limparTela)();
-                this.exibirCabecalho("COMENTAR POSTAGEM");
-                console.log("Qual a publicação que deseja comentar?");
-                const idPublicacao = Number(this._input("Publicação [Id]: "));
-                zodSchemas_1.idSchema.parse(idPublicacao);
-                const publicacao = this._redesocial.encontrarPublicacaoPorId(idPublicacao);
-                console.log();
-                console.log("Quem vai comentar?");
-                console.log();
-                const apelido = this._input("Usuário [apelido]: ").toLowerCase();
-                const usuario = this._redesocial.encontrarUsuarioPorApelido(apelido);
-                console.log();
-                console.log("Comentário:\n");
-                const texto = this._input("> ");
-                zodSchemas_1.conteudoSchema.parse(texto);
-                console.log("\nComentário registrado com sucesso!");
-            }
-            catch (e) {
-                if (e instanceof zod_1.z.ZodError) {
-                    console.log(e.errors.map(err => err.message));
-                }
-                else if (e instanceof class_AplicationError_1.AppError) {
-                    console.log(e.message);
-                }
-                else {
-                    console.log("\nErro Desconhecido. Contate o Administrador:\n", e);
-                }
-            }
-            console.log();
-            repetir = this._input("Comentar novamente? [s/n]: ");
-        } while (repetir.toLowerCase() === 's');
-    }
     telaListarPublicacoesPorUsuario() {
         let repetir = "";
         do {
