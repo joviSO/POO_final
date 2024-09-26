@@ -27,5 +27,10 @@ class Comentario {
     get publicacao() {
         return this._publicacao;
     }
+    set texto(texto) {
+        zodSchemas_1.conteudoSchema.parse(texto);
+        this._texto = texto;
+        this._dataHora = new Date();
+    }
 }
 exports.Comentario = Comentario;
