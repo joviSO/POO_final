@@ -10,14 +10,17 @@ const class_AplicationError_1 = require("./class_AplicationError");
 const class_publicacaoAvancada_1 = require("./class_publicacaoAvancada");
 const class_interacao_1 = require("./class_interacao");
 const fs_1 = __importDefault(require("fs"));
+const class_comentario_1 = require("./class_comentario");
 class RedeSocial {
-    constructor(usuarios = [], publicacoes = [], interacoes = [], controleIdUsuario = 1, controleIdPublicacao = 1, controleIdInteracao = 1) {
+    constructor(usuarios = [], publicacoes = [], interacoes = [], comentarios = [], controleIdUsuario = 1, controleIdPublicacao = 1, controleIdInteracao = 1, controleIdComentario = 1) {
         this._usuarios = usuarios;
         this._publicacoes = publicacoes;
         this._interacoes = interacoes;
+        this._comentarios = comentarios;
         this._controleIdUsuario = controleIdUsuario;
         this._controleIdPublicacao = controleIdPublicacao;
         this._controleIdInteracao = controleIdInteracao;
+        this._controleIdComentario = controleIdComentario;
     }
     get usuarios() {
         return this._usuarios;
@@ -28,6 +31,9 @@ class RedeSocial {
     get interacoes() {
         return this._interacoes;
     }
+    get comentarios() {
+        return this._comentarios;
+    }
     get controleIdUsuario() {
         return this._controleIdUsuario;
     }
@@ -36,6 +42,9 @@ class RedeSocial {
     }
     get controleIdPublicacao() {
         return this._controleIdPublicacao;
+    }
+    get controleIdComentario() {
+        return this._controleIdComentario;
     }
     validarIdUsuario(id) {
         if (this._usuarios.some((u) => u.id === id)) {
@@ -129,7 +138,18 @@ class RedeSocial {
         }
         publicacao.conteudo = novoConteudo;
     }
-    salvarDados(arquivoUsuarios, arquivoPublicacoes, arquivoInteracoes) {
+    adicionarComentarioPublicacao(publicacao, comentario) {
+        publicacao.criarComentario(comentario);
+        this._comentarios.push(comentario);
+        this._controleIdComentario += 1;
+    }
+    editarComentario(usuario, comentario, novoComentario) {
+        if (usuario !== comentario.usuario) {
+            throw new class_AplicationError_1.AppError("\nVocê não pode editar comentário de outro usuário.");
+        }
+        comentario.texto = novoComentario;
+    }
+    salvarDados(arquivoUsuarios, arquivoPublicacoes, arquivoInteracoes, arquivoComentarios) {
         let usuariosContent = "USUÁRIOS\r\n";
         for (let usuario of this._usuarios) {
             usuariosContent += `${usuario.id};${usuario.apelido};${usuario.email};${usuario.documento}\r\n`;
@@ -146,11 +166,18 @@ class RedeSocial {
             interacoesContent += `${interacao.id};${interacao.publicacao.id};${interacao.tipoInteracao};${interacao.usuario.id};${interacao.dataHora}\r\n`;
         }
         interacoesContent = interacoesContent.slice(0, interacoesContent.length - 2);
+        // Seguindo o padrão do trabalho
+        let comentariosContent = 'COMENTARIOS\r\n';
+        for (let comentario of this._comentarios) {
+            comentariosContent += `${comentario.id};${comentario.publicacao.id};${comentario.usuario.id};${comentario.texto};${comentario.dataHora}\r\n`;
+        }
+        comentariosContent = comentariosContent.slice(0, comentariosContent.length - 2);
         fs_1.default.writeFileSync(arquivoUsuarios, usuariosContent, 'utf-8');
         fs_1.default.writeFileSync(arquivoPublicacoes, publicacoesContent, 'utf-8');
         fs_1.default.writeFileSync(arquivoInteracoes, interacoesContent, 'utf-8');
+        fs_1.default.writeFileSync(arquivoComentarios, comentariosContent, 'utf-8');
     }
-    carregarDados(arquivoUsuarios, arquivoPublicacoes, arquivoInteracoes) {
+    carregarDados(arquivoUsuarios, arquivoPublicacoes, arquivoInteracoes, arquivoComentarios) {
         if (!(fs_1.default.existsSync(arquivoUsuarios) && fs_1.default.existsSync(arquivoPublicacoes) && fs_1.default.existsSync(arquivoInteracoes))) {
             throw new Error('Primeiro Acesso [Arquivo não encontrado]. Iniciando com os dados padrão');
         }
@@ -195,6 +222,15 @@ class RedeSocial {
             }
         });
         this._controleIdUsuario = this._usuarios.length + 1;
+        let comentariosData = fs_1.default.readFileSync(arquivoComentarios, 'utf-8');
+        comentariosData.split('\r\n').slice(1).map(linha => {
+            const [id, publicacaoId, usuarioId, texto, dataHora] = linha.split(';');
+            const publicacao = publicacaoMap[Number(publicacaoId)];
+            const usuario = usuarioMap[Number(usuarioId)];
+            const data = new Date(dataHora);
+            const comentario = new class_comentario_1.Comentario(Number(id), publicacao, usuario, texto, data);
+            this.adicionarComentarioPublicacao(publicacao, comentario);
+        });
     }
 }
 exports.RedeSocial = RedeSocial;

@@ -5,29 +5,36 @@ import { PublicacaoAvancada } from "./class_publicacaoAvancada";
 import { Interacao } from "./class_interacao";
 import fs from 'fs';
 import { TipoInteracao } from "../utils";
+import { Comentario } from "./class_comentario";
 
 class RedeSocial {
 	private _usuarios: Usuario[];
 	private _publicacoes: Publicacao[];
 	private _interacoes: Interacao[];
+	private _comentarios: Comentario[];
 	private _controleIdUsuario: number;
 	private _controleIdPublicacao: number;
 	private _controleIdInteracao: number;
+	private _controleIdComentario: number
 
 	constructor (
 		usuarios: Usuario[] = [],
 		publicacoes: Publicacao [] = [],
 		interacoes: Interacao[] = [],
+		comentarios: Comentario[] = [],
 		controleIdUsuario: number = 1,
 		controleIdPublicacao: number = 1,
 		controleIdInteracao: number = 1,
+		controleIdComentario: number = 1
 	) {
 		this._usuarios = usuarios;
 		this._publicacoes = publicacoes;
 		this._interacoes = interacoes;
+		this._comentarios = comentarios
 		this._controleIdUsuario = controleIdUsuario;
 		this._controleIdPublicacao = controleIdPublicacao;
 		this._controleIdInteracao = controleIdInteracao;
+		this._controleIdComentario = controleIdComentario
 	}
 
 	get usuarios() {
@@ -42,6 +49,10 @@ class RedeSocial {
 		return this._interacoes;
 	}  
 
+	get comentarios() {
+		return this._comentarios;
+	}
+
 	get controleIdUsuario() {
 		return this._controleIdUsuario;
 	}
@@ -52,6 +63,10 @@ class RedeSocial {
 
 	get controleIdPublicacao() {
 		return this._controleIdPublicacao;
+	}
+
+	get controleIdComentario() {
+		return this._controleIdComentario;
 	}
 
 	validarIdUsuario (id: number): void {
@@ -172,8 +187,21 @@ class RedeSocial {
 		publicacao.conteudo = novoConteudo;
 	}
 
+	adicionarComentarioPublicacao(publicacao: Publicacao, comentario: Comentario) {
+		publicacao.criarComentario(comentario);
+		this._comentarios.push(comentario);
+		this._controleIdComentario += 1
+	}
 
-	salvarDados (arquivoUsuarios:string, arquivoPublicacoes: string, arquivoInteracoes: string): void{
+	editarComentario(usuario: Usuario, comentario: Comentario, novoComentario: string): void {
+		if (usuario !== comentario.usuario) {
+				throw new AppError("\nVocê não pode editar comentário de outro usuário.");
+		}
+
+		comentario.texto = novoComentario;
+}
+
+	salvarDados (arquivoUsuarios:string, arquivoPublicacoes: string, arquivoInteracoes: string, arquivoComentarios: string): void{
 		let usuariosContent: string = "USUÁRIOS\r\n";
 		for (let usuario of this._usuarios){
 			usuariosContent += `${usuario.id};${usuario.apelido};${usuario.email};${usuario.documento}\r\n`;
@@ -196,13 +224,22 @@ class RedeSocial {
 
 		interacoesContent = interacoesContent.slice(0, interacoesContent.length - 2);
 
+		// Seguindo o padrão do trabalho
+		let comentariosContent: string = 'COMENTARIOS\r\n';
+		for (let comentario of this._comentarios){
+			comentariosContent += `${comentario.id};${comentario.publicacao.id};${comentario.usuario.id};${comentario.texto};${comentario.dataHora}\r\n`
+		}
+
+		comentariosContent = comentariosContent.slice(0, comentariosContent.length - 2); 
+
 		fs.writeFileSync(arquivoUsuarios, usuariosContent, 'utf-8');
 		fs.writeFileSync(arquivoPublicacoes, publicacoesContent, 'utf-8');
 		fs.writeFileSync(arquivoInteracoes, interacoesContent, 'utf-8');
+		fs.writeFileSync(arquivoComentarios, comentariosContent, 'utf-8')
 	}
 
 
-	carregarDados (arquivoUsuarios:string, arquivoPublicacoes: string, arquivoInteracoes:string): void {
+	carregarDados (arquivoUsuarios:string, arquivoPublicacoes: string, arquivoInteracoes:string, arquivoComentarios: string): void {
 		if (!(fs.existsSync(arquivoUsuarios) && fs.existsSync(arquivoPublicacoes) && fs.existsSync(arquivoInteracoes))) {
 			throw new Error('Primeiro Acesso [Arquivo não encontrado]. Iniciando com os dados padrão');
 		}
@@ -255,6 +292,18 @@ class RedeSocial {
 		});
   
 		this._controleIdUsuario = this._usuarios.length + 1;
+
+		let comentariosData = fs.readFileSync(arquivoComentarios, 'utf-8');
+		comentariosData.split('\r\n').slice(1).map(linha => {
+			const [id, publicacaoId, usuarioId, texto, dataHora ] = linha.split(';');
+			const publicacao = publicacaoMap[Number(publicacaoId)];
+			const usuario = usuarioMap[Number(usuarioId)];
+			const data = new Date(dataHora);
+
+			const comentario: Comentario = new Comentario(Number(id), publicacao, usuario, texto, data);
+			
+			this.adicionarComentarioPublicacao(publicacao, comentario);
+	});
 	}
 }
 
