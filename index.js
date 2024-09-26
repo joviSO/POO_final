@@ -50,22 +50,28 @@ function main() {
                     app.telaListarPublicacoes();
                     break;
                 case "5":
-                    app.telaInteragir();
+                    app.telaMostrarPublicacaoEComentarios();
                     break;
                 case "6":
-                    app.telaListarPublicacoesPorUsuario();
+                    app.telaInteragir();
                     break;
                 case "7":
-                    app.telaEditarPublicacao();
+                    app.telaListarPublicacoesPorUsuario();
                     break;
                 case "8":
-                    // app.telaComentar();
+                    app.telaEditarPublicacao();
                     break;
                 case "9":
                     app.telaListarInteracoes();
                     break;
                 case "10":
-                    // app.telaListarComentarios();
+                    app.telaCriarComentario();
+                    break;
+                case "11":
+                    app.telaMostrarComentarios();
+                    break;
+                case "12":
+                    app.telaEditarComentario();
                     break;
                 case "0":
                     app.redesocial.salvarDados(arquivoUsuarios, arquivoPublicacoes, arquivoInteracoes, arquivoComentarios);

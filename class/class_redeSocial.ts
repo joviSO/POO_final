@@ -147,14 +147,19 @@ class RedeSocial {
 		});
 	}
 
-	listarPublicacoes(): Publicacao[] {
+	listarPublicacoes(): { publicacao: Publicacao, comentarios: Comentario[] }[] {
 		if (this._publicacoes.length === 0) {
-			throw new AppError ("\nNenhuma publicação encontrada");
+			throw new AppError("\nNenhuma publicação encontrada");
 		}
+	
+		const publicacoesOrdenadas: Publicacao[] = [...this._publicacoes]
+			.sort((a, b) => b.dataHora.getTime() - a.dataHora.getTime());
+	
 
-		const publicacoesOrdenadas: Publicacao[] = [...this._publicacoes].sort((a, b) => b.dataHora.getTime() - a.dataHora.getTime());
-
-		return publicacoesOrdenadas;
+		return publicacoesOrdenadas.map((publicacao) => ({
+			publicacao: publicacao,
+			comentarios: publicacao.obterUltimosComentarios()
+		}));
 	}
 
 	listarInteracoes(): Interacao[]{
@@ -193,12 +198,26 @@ class RedeSocial {
 		this._controleIdComentario += 1
 	}
 
+	listarComentarios(): Comentario[]{
+		if (this._comentarios.length === 0){
+				throw new AppError("\nnenhum comentário encontrado");
+		}
+
+		const comentariosOrdenados: Comentario[] = [...this._comentarios].sort((a, b) => b.dataHora.getTime() - a.dataHora.getTime());
+
+		return comentariosOrdenados;
+}
+
 	editarComentario(usuario: Usuario, comentario: Comentario, novoComentario: string): void {
 		if (usuario !== comentario.usuario) {
 				throw new AppError("\nVocê não pode editar comentário de outro usuário.");
 		}
 
 		comentario.texto = novoComentario;
+}
+
+listarComentariosPorUsuario(usuario: Usuario): Comentario[] {
+	return this._comentarios.filter(comentario => comentario.usuario === usuario);
 }
 
 	salvarDados (arquivoUsuarios:string, arquivoPublicacoes: string, arquivoInteracoes: string, arquivoComentarios: string): void{

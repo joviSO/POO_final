@@ -9,6 +9,7 @@ import { PublicacaoAvancada } from "./class_publicacaoAvancada";
 import { limparTela, TipoInteracao } from "../utils";
 import { Interacao } from "./class_interacao";
 import {format} from 'date-fns';
+import { Comentario } from "./class_comentario";
 
 class App {
 	private _redesocial: RedeSocial;
@@ -50,10 +51,11 @@ class App {
 		console.log();
 		console.log();
 		console.log(
-			" [1] Cadastrar Usuário          [2] Listar Usuarios         [3] Postar\n",
-			"[4] FEED de Postagens          [5] Interagir               [6] Listar Postagens por Usuario\n",
-			"[7] Editar Postagem            [8] Comentar                [9] Relatório de Interações\n",
-			"[10] Relatório de Comentários  [0] Sair\n"
+			" [1] Cadastrar Usuário             [2] Listar Usuarios            [3] Postar\n",
+			"[4] FEED de Postagens             [5] Acompanhar Postagem        [6] Interagir\n",
+			"[7] Listar Postagens por Usuario  [8] Editar Postagem            [9] Relatório de Interações\n",
+			"[10] Comentar em Publicações      [11] Relatório de Comentários  [12] Editar Comentario\n",
+			"[0] Sair do sistema"
 		);
 	}
 
@@ -191,28 +193,37 @@ class App {
 			try {
 				limparTela();
 				this.exibirCabecalho("FEED DE POSTAGENS");
-
-				const publicacoes: Publicacao[] = this._redesocial.listarPublicacoes();
-
+	
+				const publicacoesComComentarios: { publicacao: Publicacao, comentarios: Comentario[] }[] = this._redesocial.listarPublicacoes();
+	
 				console.log();
-				publicacoes.forEach((publicacao: Publicacao) => {
+				publicacoesComComentarios.forEach(({ publicacao, comentarios }) => {
 					console.log("┌────────────────────────────────────────────────────────────────────┐");
-					console.log(`  [${publicacao.id}] ${publicacao.usuario.apelido}, em ${format(publicacao.dataHora, "dd/MM/yyy 'às' HH:mm")}`);
+					console.log(`  [${publicacao._id}] ${publicacao.usuario.apelido}, em ${format(publicacao.dataHora, "dd/MM/yyyy 'às' HH:mm")}`);
 					console.log();
-					console.log();
-					console.log("\t"+publicacao.conteudo);
-
+					console.log("\t" + publicacao.conteudo);
+	
 					if (publicacao instanceof PublicacaoAvancada) {
 						console.log();
-						console.log();  
+						console.log();
 						console.log(`  ${(publicacao as PublicacaoAvancada).listarInteracoesPublicacao()}`);
 					}
-
+	
 					console.log();
+	
+					if (comentarios.length > 0) {
+						console.log("  Comentários:");
+						comentarios.forEach((comentario) => {
+							console.log(`  - ${comentario.usuario.apelido}: ${comentario.texto}`);
+						});
+					} else {
+						console.log("  Nenhum comentário.");
+					}
+	
 					console.log("└────────────────────────────────────────────────────────────────────┘");
 					console.log();
 				});
-
+	
 			} catch (e) {
 				if (e instanceof z.ZodError) {
 					console.log(e.errors.map(err => err.message));
@@ -224,7 +235,7 @@ class App {
 			}
 			console.log();
 			repetir = this._input("Listar novamente? [s/n]: ");
-
+	
 		} while (repetir.toLowerCase() === 's');
 	}
 
@@ -353,7 +364,6 @@ class App {
 		} while (repetir.toLowerCase() === 's');
 	}
 
-
 	telaListarInteracoes (): void {
 		let repetir: string = "";
 		do {
@@ -449,6 +459,205 @@ class App {
 			repetir = this._input("Editar outra publicação? [s/n]: ");
 		} while (repetir.toLowerCase() === 's');
 	}
+
+	telaCriarComentario(): void {
+		let repetir: string = "";
+	
+		do {
+			try {
+				limparTela();
+				this.exibirCabecalho("COMENTAR POSTAGEM");
+
+				console.log("Selecione uma publicação para comentar:\n");
+				const publicacoes: { publicacao: Publicacao, comentarios: Comentario[] }[] = this._redesocial.listarPublicacoes();
+
+				publicacoes.forEach(({ publicacao }) => {
+					console.log("┌────────────────────────────────────────────────────────────────────┐");
+					console.log(`  [${publicacao.id}] ${publicacao.usuario.apelido}, em ${format(publicacao.dataHora, "dd/MM/yyyy 'às' HH:mm")}`);
+					console.log("\t" + publicacao.conteudo);
+					console.log("└────────────────────────────────────────────────────────────────────┘");
+					console.log();
+				});
+	
+				console.log("Escolha a publicação de sua preferencia");
+				const idPublicacao: number = Number(this._input("Publicação [Id]: "));
+				idSchema.parse(idPublicacao);
+				const publicacao: Publicacao = this._redesocial.encontrarPublicacaoPorId(idPublicacao);
+	
+				console.log("\nPublicação Selecionada:");
+				console.log(`  [${publicacao._id}] ${publicacao.usuario.apelido}, em ${format(publicacao.dataHora, "dd/MM/yyyy 'às' HH:mm")}`);
+				console.log(`\n  ${publicacao.conteudo}`);
+	
+				console.log();
+				console.log("Quem é você?");
+				const apelido: string = this._input("Usuário [apelido]: ").toLowerCase();
+				const usuario: Usuario = this._redesocial.encontrarUsuarioPorApelido(apelido);
+	
+				console.log();
+				console.log("Comentário:\n");
+				const texto = this._input("> ");
+				conteudoSchema.parse(texto);
+				const comentario: Comentario = new Comentario(this._redesocial.controleIdComentario, publicacao, usuario, texto, new Date());
+	
+				this._redesocial.adicionarComentarioPublicacao(publicacao, comentario);
+	
+				console.log("\nComentário registrado com sucesso!");
+	
+			} catch (e) {
+				if (e instanceof z.ZodError) {
+					console.log(e.errors.map(err => err.message));
+				} else if (e instanceof AppError) {
+					console.log(e.message);
+				} else {
+					console.log("\nErro Desconhecido. Contate o Administrador:\n", e);
+				}
+			}
+			console.log();
+			repetir = this._input("Comentar novamente? [s/n]: ");
+		} while (repetir.toLowerCase() === 's');
+	}
+	
+
+	telaMostrarComentarios (): void {
+		let repetir: string = "";
+		do {
+			try{
+				limparTela();
+				this.exibirCabecalho("RELATÓRIO DE COMENTÁRIOS");
+
+				const comentarios: Comentario[] = this._redesocial.listarComentarios();
+				console.log();
+				comentarios.forEach((comentario: Comentario) => {
+					console.log();
+					console.log(`Comentário[id]: ${comentario.id} - Usuário: ${comentario.usuario.apelido} - Publicação[Id]: ${comentario.publicacao.id} - em ${format(comentario.dataHora, "dd/MM/yyy 'às' HH:mm")}`);
+					console.log(`Texto: "${comentario.texto}"`);
+				});
+			}catch(e){
+				if (e instanceof z.ZodError){
+					console.log(e.errors.map(err => err.message));
+				} else if ( e instanceof AplicationError)  {
+					console.log(e.message);
+				} else {
+					console.log("Erro Desconhecido. Contate o Administrador:\n", e);
+				}
+			}
+			console.log();
+			repetir = this._input("Gerar relatório novamente? [s/n]: ");
+
+		} while (repetir.toLowerCase() ==="s");
+	}
+
+	telaMostrarPublicacaoEComentarios(): void {
+		let repetir: string = "";
+		do {
+			try {
+				limparTela();
+				this.exibirCabecalho("VISUALIZAR PUBLICAÇÃO E COMENTÁRIOS");
+	
+				const idPublicacao: number = Number(this._input("Publicação [ID]: "));
+				idSchema.parse(idPublicacao);
+				const publicacao: Publicacao = this._redesocial.encontrarPublicacaoPorId(idPublicacao);
+	
+				console.log("┌────────────────────────────────────────────────────────────────────┐");
+				console.log(`  [${publicacao._id}] ${publicacao.usuario.apelido}, em ${format(publicacao.dataHora, "dd/MM/yyyy 'às' HH:mm")}`);
+				console.log();
+				console.log("\t" + publicacao.conteudo);
+				console.log();
+	
+				if (publicacao instanceof PublicacaoAvancada) {
+					console.log();
+					console.log(`  ${(publicacao as PublicacaoAvancada).listarInteracoesPublicacao()}`);
+				}
+	
+				console.log();
+				console.log("Comentários:");
+				const comentarios = publicacao.showComentarios();
+				if (comentarios.length > 0) {
+					comentarios.forEach((comentario: Comentario) => {
+						console.log("┌────────────────────────────────────────────────────────────────────┐");
+						console.log(`  [${comentario._id}] ${comentario.usuario.apelido}, em ${format(comentario.dataHora, "dd/MM/yyyy 'às' HH:mm")}`);
+						console.log();
+						console.log("\t" + comentario.texto);
+						console.log("└────────────────────────────────────────────────────────────────────┘");
+					});
+				} else {
+					console.log("Nenhum comentário nesta publicação.");
+				}
+	
+				console.log("└────────────────────────────────────────────────────────────────────┘");
+				console.log();
+	
+			} catch (e) {
+				if (e instanceof z.ZodError) {
+					console.log(e.errors.map(err => err.message));
+				} else if (e instanceof AppError) {
+					console.log(e.message);
+				} else {
+					console.log("Erro Desconhecido. Contate o Administrador:\n", e);
+				}
+			}
+	
+			console.log();
+			repetir = this._input("Visualizar outra publicação? [s/n]: ");
+		} while (repetir.toLowerCase() === 's');
+	}
+	
+	telaEditarComentario(): void {
+		let repetir: string = "";
+		do {
+			try {
+				limparTela();
+				this.exibirCabecalho("EDITAR COMENTÁRIO");
+	
+				const apelido: string = this._input("Usuário (apelido): ").toLowerCase();
+				const usuario: Usuario = this._redesocial.encontrarUsuarioPorApelido(apelido);
+	
+				const comentariosUsuario: Comentario[] = this._redesocial.listarComentariosPorUsuario(usuario);
+	
+				if (comentariosUsuario.length === 0) {
+					throw new AppError(`\nO usuário ${apelido} não possui comentários registrados.`);
+				}
+	
+				console.log();
+				console.log(`# Comentários de ${apelido.toUpperCase()}:`);
+				console.log();
+				
+				comentariosUsuario.forEach((comentario: Comentario) => {
+					console.log("┌────────────────────────────────────────────────────────────────────┐");
+					console.log(`  [${comentario._id}] ${comentario.usuario.apelido}, em ${format(comentario.dataHora, "dd/MM/yyyy 'às' HH:mm")}`);
+					console.log("\t" + comentario.texto);
+					console.log("└────────────────────────────────────────────────────────────────────┘");
+					console.log();
+				});
+	
+				const idComentario: number = Number(this._input("Digite o ID do comentário que deseja editar: "));
+				const comentarioSelecionado: Comentario | undefined = comentariosUsuario.find(comentario => comentario._id === idComentario);
+	
+				if (!comentarioSelecionado) {
+					throw new AppError(`\nComentário com ID ${idComentario} não encontrado para o usuário ${apelido}.`);
+				}
+	
+				console.log();
+				const novoComentario: string = this._input("Digite novo comentário: ");
+				conteudoSchema.parse(novoComentario);
+	
+				this._redesocial.editarComentario(usuario, comentarioSelecionado, novoComentario);
+	
+				console.log("\nComentário editado com sucesso!");
+	
+			} catch (e) {
+				if (e instanceof z.ZodError) {
+					console.log(e.errors.map(err => err.message));
+				} else if (e instanceof AppError) {
+					console.log(e.message);
+				} else {
+					console.log("\nErro desconhecido. Contate o administrador:\n", e);
+				}
+			}
+			console.log();
+			repetir = this._input("Editar outro comentário? [s/n]: ");
+		} while (repetir.toLowerCase() === 's');
+	}	
 }
 		
 export {App}

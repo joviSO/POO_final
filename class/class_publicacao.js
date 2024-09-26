@@ -41,5 +41,8 @@ class Publicacao {
     totalComentarios() {
         return this._comentarios.length;
     }
+    obterUltimosComentarios() {
+        return this._comentarios.slice(-2).reverse();
+    }
 }
 exports.Publicacao = Publicacao;

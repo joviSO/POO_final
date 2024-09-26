@@ -114,8 +114,12 @@ class RedeSocial {
         if (this._publicacoes.length === 0) {
             throw new class_AplicationError_1.AppError("\nNenhuma publicação encontrada");
         }
-        const publicacoesOrdenadas = [...this._publicacoes].sort((a, b) => b.dataHora.getTime() - a.dataHora.getTime());
-        return publicacoesOrdenadas;
+        const publicacoesOrdenadas = [...this._publicacoes]
+            .sort((a, b) => b.dataHora.getTime() - a.dataHora.getTime());
+        return publicacoesOrdenadas.map((publicacao) => ({
+            publicacao: publicacao,
+            comentarios: publicacao.obterUltimosComentarios()
+        }));
     }
     listarInteracoes() {
         if (this._interacoes.length === 0) {
@@ -143,11 +147,21 @@ class RedeSocial {
         this._comentarios.push(comentario);
         this._controleIdComentario += 1;
     }
+    listarComentarios() {
+        if (this._comentarios.length === 0) {
+            throw new class_AplicationError_1.AppError("\nnenhum comentário encontrado");
+        }
+        const comentariosOrdenados = [...this._comentarios].sort((a, b) => b.dataHora.getTime() - a.dataHora.getTime());
+        return comentariosOrdenados;
+    }
     editarComentario(usuario, comentario, novoComentario) {
         if (usuario !== comentario.usuario) {
             throw new class_AplicationError_1.AppError("\nVocê não pode editar comentário de outro usuário.");
         }
         comentario.texto = novoComentario;
+    }
+    listarComentariosPorUsuario(usuario) {
+        return this._comentarios.filter(comentario => comentario.usuario === usuario);
     }
     salvarDados(arquivoUsuarios, arquivoPublicacoes, arquivoInteracoes, arquivoComentarios) {
         let usuariosContent = "USUÁRIOS\r\n";
