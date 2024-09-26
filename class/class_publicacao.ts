@@ -48,7 +48,7 @@ class Publicacao {
 		this._dataHora = new Date();
 	}
 
-	criarComentarios(comentario: Comentario): void {
+	criarComentario(comentario: Comentario): void {
 		this._comentarios.push(comentario);
 	}
 

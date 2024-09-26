@@ -32,7 +32,7 @@ class Publicacao {
         this._conteudo = novoConteudo;
         this._dataHora = new Date();
     }
-    criarComentarios(comentario) {
+    criarComentario(comentario) {
         this._comentarios.push(comentario);
     }
     showComentarios() {
