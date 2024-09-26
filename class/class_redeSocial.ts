@@ -259,7 +259,7 @@ listarComentariosPorUsuario(usuario: Usuario): Comentario[] {
 
 
 	carregarDados (arquivoUsuarios:string, arquivoPublicacoes: string, arquivoInteracoes:string, arquivoComentarios: string): void {
-		if (!(fs.existsSync(arquivoUsuarios) && fs.existsSync(arquivoPublicacoes) && fs.existsSync(arquivoInteracoes))) {
+		if (!(fs.existsSync(arquivoUsuarios) && fs.existsSync(arquivoPublicacoes) && fs.existsSync(arquivoInteracoes)) && fs.existsSync(arquivoComentarios)) {
 			throw new Error('Primeiro Acesso [Arquivo não encontrado]. Iniciando com os dados padrão');
 		}
 
